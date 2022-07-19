@@ -86,9 +86,9 @@ app.post('/register', (req, res) => {
     .insert({
         name: name,
         email: email
-    }).then(response => {
-        res.json('done');
-    })
+    }).then(user => {
+        res.json(user[0]);
+    }).catch(err=> res.status(400).json('unable to register'))
 
 
 
