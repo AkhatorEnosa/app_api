@@ -15,9 +15,9 @@ const db = knex({
   }
 });
 
-db.select('*').from('users').then(data=>{
-    console.log(data)
-});
+// db.select('*').from('users').then(data=>{
+//     console.log(data)
+// });
 
 const app = express();
 
@@ -57,13 +57,13 @@ app.get('/', (req, res) => {
 });
 
 app.post('/signin', (req, res) => {
-    bcrypt.compare( "somethingaboutpeter", "$2a$10$Vybv0LB0EQ2nRq1nlMGsyehe5n91ZY85r9v2amkoXqK/y7M0lTqLO", function(err, res) {
-        console.log('first', res);
-    });
+    // bcrypt.compare( "somethingaboutpeter", "$2a$10$Vybv0LB0EQ2nRq1nlMGsyehe5n91ZY85r9v2amkoXqK/y7M0lTqLO", function(err, res) {
+    //     console.log('first', res);
+    // });
     
-    bcrypt.compare("veggies", "$2a$10$Vybv0LB0EQ2nRq1nlMGsyehe5n91ZY85r9v2amkoXqK/y7M0lTqLO", function(err, res) {
-        console.log('second', res);
-    });
+    // bcrypt.compare("veggies", "$2a$10$Vybv0LB0EQ2nRq1nlMGsyehe5n91ZY85r9v2amkoXqK/y7M0lTqLO", function(err, res) {
+    //     console.log('second', res);
+    // });
 
    if(req.body.email === database.users[0].email && req.body.password === database.users[0].password){
         // res.json("success");
@@ -76,10 +76,10 @@ app.post('/signin', (req, res) => {
 app.post('/register', (req, res) => {
     const { name, email, password } = req.body;
 
-    bcrypt.hash(password, null, null, function(err, hash) {
-        // Store hash in your password DB.
-        console.log(hash);
-    });
+    // bcrypt.hash(password, null, null, function(err, hash) {
+    //     // Store hash in your password DB.
+    //     console.log(hash);
+    // });
 
     db('users')
     .returning('*')
