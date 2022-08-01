@@ -3,14 +3,15 @@ const bcrypt = require("bcrypt-nodejs");
 const cors =  require('cors');
 
 const knex = require('knex');
+const { response } = require('express');
 
 const db = knex({
   client: 'pg',
   connection: {
     host : '127.0.0.1',
     port : 5432,
-    user : 'postgres',
-    password : 'root',
+    user : 'oakhator',
+    password : '',
     database : 'app_db'
   }
 });
@@ -21,39 +22,12 @@ const db = knex({
 
 const app = express();
 
-const database = {
-    users : [
-        {
-            id: "126",
-            name: "Osa",
-            email: "osa@email.com",
-            password: "password",
-            entries: 0
-        },
-        {
-            id: "122",
-            name: "Peters",
-            email: "peters@email.com",
-            password: "password",
-            entries: 0
-        },
-    ],
-
-    login : [
-        {
-            id: '903',
-            hash: '',
-            email: 'osa@gmail.com'
-        }
-    ]
-}
-
 // app.use(express.urlencoded({extension: true}));
 app.use(express.json());
 app.use(cors());
 
 app.get('/', (req, res) => {
-    res.json(database.users);
+    res.json("success");
 });
 
 app.post('/signin', (req, res) => {
@@ -64,76 +38,81 @@ app.post('/signin', (req, res) => {
     // bcrypt.compare("veggies", "$2a$10$Vybv0LB0EQ2nRq1nlMGsyehe5n91ZY85r9v2amkoXqK/y7M0lTqLO", function(err, res) {
     //     console.log('second', res);
     // });
+    const { email, password } = req.body;
 
-   if(req.body.email === database.users[0].email && req.body.password === database.users[0].password){
-        // res.json("success");
-        res.json(database.users[0]);
-   } else {
-       res.status(400).json("Error signing in. Please check your login details");
-   }
+   db.select('email', 'hash').from('login')
+   .where('email', '=' , email )
+   .then(data => {
+    const isValid = bcrypt.compareSync(password, data[0].hash);
+        if(isValid) {
+            db.select('*').from('users')
+            .where('email', '=', email)
+            .then(user => {
+                res.json(user[0])
+            })
+            .catch(err => res.status(400).json("Unable to get user"));
+        } else {
+            res.status(400).json("Wrong credentials");
+        }
+   })
+   .catch(err => res.status(400).json("wrong credentials"))
 });
 
 app.post('/register', (req, res) => {
     const { name, email, password } = req.body;
+    const hash = bcrypt.hashSync(password);
 
-    // bcrypt.hash(password, null, null, function(err, hash) {
-    //     // Store hash in your password DB.
-    //     console.log(hash);
-    // });
-
-    db('users')
-    .returning('*')
-    .insert({
-        name: name,
-        email: email
-    }).then(user => {
-        res.json(user[0]);
-    }).catch(err=> res.status(400).json('unable to register'))
-
-
-
-    // database.users.push({
-    //     id: "126",
-    //     name: name,
-    //     email: email,
-    //     password: password
-    // });
+    db.transaction(trx =>  {
+        trx.insert({
+            hash: hash,
+            email: email
+        })
+        .into('login')
+        .returning('email')
+        .then(loginEmail => {
+            return  trx('users')
+            .returning('*')
+            .insert({
+                name: name,
+                email: loginEmail[0].email
+            })
+            .then(user => {
+                res.json(user[0]);
+            })
+            .catch(err => {
+                res.status(400).json(err);
+            });
+        })
+        .then(trx.commit)
+        .catch(trx.rollback)
+    });
 });
 
 app.get('/profile/:id', (req, res) => {
     const { id } = req.params;
-    let found =  false
+    // let found =  false
 
-    database.users.forEach(user => {
-        if(user.id === id) {
-            found = true;
-            return res.json(user);
+    db.select('*').from('users').where({ id })
+    .then(user => {
+        if(user.length) {
+            res.json(user[0]);
+        } else {
+            res.status(400).json("User not found");
         }
-    });
-
-    if(!found){
-        res.status(400).json({
-            "message": "Profile not found"
-        });
-    }
+    })
+    .catch(err => res.status(400).json("Error getting user"));
 });
 
 app.put('/image', (req, res) => {
     const { id } = req.body;
-    let found = false;
-
-    database.users.forEach(user => {
-        if(user.id === id) {
-            found = true;
-            user.entries ++;
-
-            return res.json(user.entries);
-        }
-    });
-
-    if(!found) {
-        res.status(404).json()
-    }
+    
+    db('users').where('id', '=', id)
+    .increment('entries', 1)
+    .returning('entries')
+    .then(entries => {
+        res.json(entries[0].entries);
+    })
+    .catch(err => res.status(400).json("Unable to get entries at this time"));
 })
 
 // Load hash from your password DB.
