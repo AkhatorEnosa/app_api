@@ -31,13 +31,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/signin', (req, res) => {
-    // bcrypt.compare( "somethingaboutpeter", "$2a$10$Vybv0LB0EQ2nRq1nlMGsyehe5n91ZY85r9v2amkoXqK/y7M0lTqLO", function(err, res) {
-    //     console.log('first', res);
-    // });
-    
-    // bcrypt.compare("veggies", "$2a$10$Vybv0LB0EQ2nRq1nlMGsyehe5n91ZY85r9v2amkoXqK/y7M0lTqLO", function(err, res) {
-    //     console.log('second', res);
-    // });
+     
     const { email, password } = req.body;
 
    db.select('email', 'hash').from('login')
