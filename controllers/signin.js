@@ -1,6 +1,9 @@
 const handleSignIn = (req, res, bcrypt, db) => {
      
     const { email, password } = req.body;
+    // if(email === "" || password === "") {
+    //     return res.status(400).json("Could not sign you in.")
+    // }
 
    db.select('email', 'hash').from('login')
    .where('email', '=' , email )
